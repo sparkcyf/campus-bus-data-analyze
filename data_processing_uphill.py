@@ -57,6 +57,7 @@ FROM bus_stat WHERE
 lat BETWEEN 22.598012 AND 22.598691
 AND lng BETWEEN 113.990016 AND 113.990676
 AND course BETWEEN 90 AND 270
+AND gps_time BETWEEN 1606510805 AND 1606662005
 AND acc = 1
 )
 where diff > 30) ts
@@ -159,17 +160,35 @@ route_control_point_np_append_time_and_count = np.c_[route_control_point_np,time
 
 # 0 lng 1 lat 2 time_sum 3 count
 
+time_list = [[] for i in range(len(rp))]
+
 for id, path in path_sample_polished.items():
-    for node in path:
-#        if Point(node.lng, node.lat).within(loop_mask):
-            point = [node.lng,node.lat]
-            control_point_index = spatial.KDTree(route_control_point_np).query(point)[1]
-            route_control_point_np_append_time_and_count[control_point_index][3] = route_control_point_np_append_time_and_count[control_point_index][3] + 1
-            route_control_point_np_append_time_and_count[control_point_index][2] = route_control_point_np_append_time_and_count[control_point_index][2] + node.gps_time
+    i, j = 0, 0
+    while j < len(path):
+        point = [path[j].lng, path[j].lat]
+        control_point_index = spatial.KDTree(rp[i:i + 12]).query(point)[1]
+
+        # print(j, '->', i + control_point_index)
+        time_list[i + control_point_index].append(path[j].gps_time)
+
+        # route_control_point_np_append_time_and_count[control_point_index][3] = \
+        # route_control_point_np_append_time_and_count[control_point_index][3] + 1
+        # route_control_point_np_append_time_and_count[control_point_index][2] = \
+        # route_control_point_np_append_time_and_count[control_point_index][2] + node.gps_time
+
+        j += 1
+        i += control_point_index
+    # print(id, ': finished')
+
+# for i in range(len(time_list)):
+#     print(i, ': ', time_list[i][:5])
 
 
 
+# normalized_time = (route_control_point_np_append_time_and_count.T[2] / route_control_point_np_append_time_and_count.T[3]).T
+# route_control_point_np_append_time_and_count = np.c_[route_control_point_np, normalized_time]
+# np.savetxt("up-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",")
 
-normalized_time = (route_control_point_np_append_time_and_count.T[2] / route_control_point_np_append_time_and_count.T[3]).T
-route_control_point_np_append_time_and_count = np.c_[route_control_point_np, normalized_time]
-np.savetxt("up-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",")
+
+with open('bus_location_data.json', 'w') as outfile:
+    json.dump(time_list, outfile)

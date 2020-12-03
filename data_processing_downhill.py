@@ -1,16 +1,7 @@
 # python script for processing the geodata acquired from sustech bus api
 
 
-#import geopandas as gpd
-#import pysal
-#import cartopy
-#import geoplot
-#import osmnx
-#import folium
-#import dash
-#import rasterio
-#import osmnx
-#import contextily
+
 import sqlite3
 import numpy as np
 
@@ -54,8 +45,8 @@ SELECT
 	device_info_new,
 	acc
 FROM bus_stat WHERE 
-lat BETWEEN 22.598012 AND 22.598691
-AND lng BETWEEN 113.990016 AND 113.990676
+lat BETWEEN 22.609331 AND 22.609994
+AND lng BETWEEN 113.997557 AND 113.99864
 AND course BETWEEN 90 AND 270
 AND acc = 1
 )
@@ -72,7 +63,7 @@ SELECT
 FROM bus_stat) t1
 on ts.imei = t1.imei 
 where (0 < ts.gps_time - t1.gps_time and ts.gps_time - t1.gps_time < 30 and t1.device_info_new = 0)
-or (0 <= t1.gps_time - ts.gps_time and t1.gps_time - ts.gps_time < 900 and (t1.lat < 22.609524 or t1.device_info_new = 0))''')
+or (0 <= t1.gps_time - ts.gps_time and t1.gps_time - ts.gps_time < 900 and (t1.lat < 22.598937 or t1.device_info_new = 0))''')
 
 path_list = db_cursor.fetchall()
 path_list_np = np.array(path_list)
@@ -143,12 +134,9 @@ for f in control_mask['features']:
 
 
 # import route control point
-f = open('route-control-point.geojson', 'r')
+f = open('route-control-point-downhill.geojson', 'r')
 route_control_point = json.load(f)
 f.close()
-
-rl = route_control_point['features'][0]['geometry']['coordinates'].copy()
-rp = rl[:91] + rl[63:75] + rl[91:]
 
 #route_control_point['features'][0]['geometry']['coordinates']
 # json to np array
@@ -158,7 +146,6 @@ route_control_point_np_append_time_and_count = np.c_[route_control_point_np,time
 #spatial.KDTree(B).query(pt)[1]
 
 # 0 lng 1 lat 2 time_sum 3 count
-
 for id, path in path_sample_polished.items():
     for node in path:
 #        if Point(node.lng, node.lat).within(loop_mask):
@@ -172,4 +159,4 @@ for id, path in path_sample_polished.items():
 
 normalized_time = (route_control_point_np_append_time_and_count.T[2] / route_control_point_np_append_time_and_count.T[3]).T
 route_control_point_np_append_time_and_count = np.c_[route_control_point_np, normalized_time]
-np.savetxt("up-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",")
+np.savetxt("down-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",")

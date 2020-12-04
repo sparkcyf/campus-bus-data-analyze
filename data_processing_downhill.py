@@ -158,5 +158,7 @@ for id, path in path_sample_polished.items():
 
 
 normalized_time = (route_control_point_np_append_time_and_count.T[2] / route_control_point_np_append_time_and_count.T[3]).T
-route_control_point_np_append_time_and_count = np.c_[route_control_point_np, normalized_time]
-np.savetxt("down-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",")
+consecutive = list(range(len(time_append)))
+route_control_point_np_append_time_and_count = np.c_[consecutive,route_control_point_np, normalized_time]
+
+np.savetxt("down-mean-time.csv", route_control_point_np_append_time_and_count, delimiter=",",header="index,lng,lat,time")

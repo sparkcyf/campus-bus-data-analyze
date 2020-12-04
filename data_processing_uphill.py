@@ -21,7 +21,7 @@ from shapely.geometry import Point, Polygon
 
 #nearest point
 from scipy import spatial
-
+import pandas as pd
 #jit
 #import numba
 #from numba import jit
@@ -57,7 +57,7 @@ FROM bus_stat WHERE
 lat BETWEEN 22.598012 AND 22.598691
 AND lng BETWEEN 113.990016 AND 113.990676
 AND course BETWEEN 90 AND 270
-AND gps_time BETWEEN 1606510805 AND 1606662005
+
 AND acc = 1
 )
 where diff > 30) ts
@@ -73,7 +73,7 @@ SELECT
 FROM bus_stat) t1
 on ts.imei = t1.imei 
 where (0 < ts.gps_time - t1.gps_time and ts.gps_time - t1.gps_time < 30 and t1.device_info_new = 0)
-or (0 <= t1.gps_time - ts.gps_time and t1.gps_time - ts.gps_time < 900 and (t1.lat < 22.609524 or t1.device_info_new = 0))''')
+or (0 <= t1.gps_time - ts.gps_time and t1.gps_time - ts.gps_time < 1100 and (t1.lat < 22.609524 or t1.device_info_new = 0))''')
 
 path_list = db_cursor.fetchall()
 path_list_np = np.array(path_list)
@@ -170,12 +170,6 @@ for id, path in path_sample_polished.items():
 
         # print(j, '->', i + control_point_index)
         time_list[i + control_point_index].append(path[j].gps_time)
-
-        # route_control_point_np_append_time_and_count[control_point_index][3] = \
-        # route_control_point_np_append_time_and_count[control_point_index][3] + 1
-        # route_control_point_np_append_time_and_count[control_point_index][2] = \
-        # route_control_point_np_append_time_and_count[control_point_index][2] + node.gps_time
-
         j += 1
         i += control_point_index
     # print(id, ': finished')
@@ -192,3 +186,18 @@ for id, path in path_sample_polished.items():
 
 with open('bus_location_data.json', 'w') as outfile:
     json.dump(time_list, outfile)
+import statistics
+list2 = []
+cnt2 = 0
+for i in time_list:
+    print(statistics.mean(time_list[cnt2]))
+    list2.append(statistics.mean(time_list[cnt2]))
+    cnt2 = cnt2 + 1
+
+#print(statistics.mean(time_list[0]))
+print(list2)
+
+consecutive = list(range(len(list2)))
+output_arr = np.c_[consecutive,rp,list2]
+
+np.savetxt("uphill-mean-time.csv", output_arr, delimiter=",",header="index,lng,lat,time")
